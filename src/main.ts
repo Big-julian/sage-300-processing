@@ -1,7 +1,7 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import './style.css';
+import typescriptLogo from './typescript.svg';
+import viteLogo from '/vite.svg';
+import { setupCounter } from './counter.ts';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
@@ -14,20 +14,20 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <h1>Excel Data Extractor</h1>  
     <input type="file" id="file-input" accept=".xlsx, .xls" />
     <pre id="output"><code></code></pre>
-  
   </div>
-`
+`;
+
 document.getElementById('file-input').addEventListener('change', handleFile, false);
 
-function handleFile(event) {
-  const file = event.target.files[0]; // Get the selected file
+function handleFile(event: Event) {
+  const file = (event.target as HTMLInputElement).files![0]; // Get the selected file
   if (!file) {
       return;
   }
 
   const reader = new FileReader(); // Create a FileReader instance
   reader.onload = function (e) {
-      const arrayBuffer = e.target.result; // Get the result from FileReader
+      const arrayBuffer = e.target!.result; // Get the result from FileReader
 
       // Read the workbook
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -38,6 +38,19 @@ function handleFile(event) {
 
       // Convert the sheet to JSON format
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false }); // Set raw to false for text
+
+      // Extract only the first 5 columns
+      const studentData = jsonData.map(row => ({
+          STUDENTNAME: row["STUDENT NAME"], // First column
+          MATRICNO: row["MATRIC NO"], // First column
+          REGISTRATIONNUMBER: row["REGISTRATION NUMBER"], // First column
+          LEVEL: row["LEVEL"], // First column
+          PROGRAM: row["PROGRAM"], // Third column
+          DEPARTMENT: row["DEPARTMENT"], // Third column
+          FACULTY: row["FACULTY"], // Third column
+
+      })); // Filter out empty rows
+
 
       // Extract only the first 5 columns
       const extractedData = jsonData.map(row => ({
@@ -54,21 +67,23 @@ function handleFile(event) {
           YQ: row["YQ"]  // Fifth column
       }))// Filter out empty rows
 
-      // Display the extracted data in the output element
-      document.getElementById('output').textContent = JSON.stringify(extractedData, null, 2);
 
-      axios.post('http://localhost:3000/api/endpoint', extractedData)
-      .then(response => {
+
+      // Display the extracted data in the output element
+      document.getElementById('output')!.textContent = JSON.stringify(studentData, null, 2);
+
+       
+      axios.post('http://localhost:3000/api/endpoint', studentData)
+     .then(response => {
           console.log('Data sent successfully:', response.data);
-      })
-      .catch(error => {
+       })
+     .catch(error => {
           console.error('Error sending data:', error);
-      });
+       });
   };
 
   reader.readAsArrayBuffer(file);  
- 
-  //reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
 }
 
-//setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+
+// setupCounter(document.querySelector<HTMLButtonElement>('#counter')!);
